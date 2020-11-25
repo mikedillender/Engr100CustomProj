@@ -11,10 +11,32 @@ anchorpoint = Point(width / 2, height / 2)
 win = GraphWin("map_display_window", width, height)
 image = Image(anchorpoint, height, width)
 
-data = []
+trials = []
 for i in range(5):
-    print("data " + str(i + 1) + " : ")
-    data.append(imp.getData(i + 1))
+    trials.append(imp.getData(i + 1))
+for d in trials:
+    print(d)
+
+'''
+trials[trial number][data index][index]=variable
+
+data indexes
+0 - time
+1 - front lidar
+2 - right lidar
+3 - back lidar
+4 - left lidar
+5 - x accel
+6 - y accel
+7 - pitch
+8 - roll
+9 - yaw
+10 - airspeed
+11 - groundspeed
+12 - altitude
+13 - accel er x
+14 - accel er y
+'''
 
 
 def clear(win):
@@ -22,7 +44,25 @@ def clear(win):
         item.undraw()
     win.update()
 
+def smooth(mat):
+    size = len(mat)
+    last = mat[0]
+    newvals = []
+    for i in range(size - 1):
+        v = (last + mat[i + 1]) / 2.0 * .3 + mat[i] * .7
+        last = mat[i]
+        newvals.append(v)
+    for v in range(len(newvals)):
+        mat[v] = newvals[v]
+    return mat
 
+
+'''while not keyboard.is_pressed('esc'):
+    # if (keyboard.is_pressed('r')):
+    renderLid()
+    time.sleep(2)'''
+
+'''
 def renderLid():
     globals()
     clear(win)
@@ -44,22 +84,4 @@ def renderLid():
                 lin.setFill(colors[l])
                 lin.draw(win)
             data[s][1] = smooth(data[s][1], l + 1)
-
-
-def smooth(mat, ind):
-    size = len(mat)
-    last = mat[0][ind]
-    newvals = []
-    for i in range(size - 1):
-        v = (last + mat[i + 1][ind]) / 2.0 * .3 + mat[i][ind] * .7
-        last = mat[i][ind]
-        newvals.append(v)
-    for v in range(len(newvals)):
-        mat[v][ind] = newvals[v]
-    return mat
-
-
-'''while not keyboard.is_pressed('esc'):
-    # if (keyboard.is_pressed('r')):
-    renderLid()
-    time.sleep(2)'''
+'''

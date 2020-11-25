@@ -80,12 +80,12 @@ def getData(num):
     else:
         for i in range(11):
             dat[i] = resize(dat[i], len(lid[0]))
-    print(lid)
-    print(dat)
+    #print(lid)
+    #print(dat)
     full = []
     full.append(dat[0])
     for i in range(4):
         full.append(lid[i + 1])
     for i in range(10):
         full.append(dat[i + 1])
-    return [dat, lid]
+    return full
