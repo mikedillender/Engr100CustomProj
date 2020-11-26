@@ -19,7 +19,6 @@ for d in trials:
 
 '''
 trials[trial number][data index][index]=variable
-
 data indexes
 0 - time
 1 - front lidar
@@ -37,6 +36,20 @@ data indexes
 13 - accel er x
 14 - accel er y
 '''
+
+def getLidVelAt(mat,n):
+    deltas=[]
+    for l in range(4):
+        v=0
+        if(n==0):
+            v=(mat[1+l][n+1]-mat[1+l][n])/mat[0][n]
+        elif(n+1==len(mat[0])):
+            v=(mat[1+l][n]-mat[1+l][n-1])/mat[0][n-1]
+        else:
+            v=(mat[1+l][n]-mat[1+l][n-1])/mat[0][n-1]
+            v=v+(mat[1+l][n+1]-mat[1+l][n])/mat[0][n]
+        deltas.append(v)
+    return deltas
 
 
 def clear(win):
@@ -57,12 +70,7 @@ def smooth(mat):
     return mat
 
 
-'''while not keyboard.is_pressed('esc'):
-    # if (keyboard.is_pressed('r')):
-    renderLid()
-    time.sleep(2)'''
 
-'''
 def renderLid():
     globals()
     clear(win)
@@ -70,12 +78,22 @@ def renderLid():
     colors = ["green", "red", "blue", "black"]
     for s in range(5):
         adj = int(height * float(s + 1) / 5)
-        lid1 = data[s][1]
-        for l in range(4):
+        x = 0
+        y = trials[s][12][0]*100
+        print(trials[s][12])
+        size=len(trials[s][12])
+        for n in range(size):
+            last = Point(x, adj - y * 100)
+            x += width / size
+            y = trials[s][12][n]
+            this = Point(x, adj - y * 100)
+            lin = Line(last, this)
+            lin.draw(win)
+
+        '''for l in range(4):
             x = 0
             y = lid1[0][1 + l]
             size = len(lid1)
-            for n in range(size):
                 last = Point(x, adj - y * 5)
                 x += width / size
                 y = lid1[n][1 + l]
@@ -83,5 +101,12 @@ def renderLid():
                 lin = Line(last, this)
                 lin.setFill(colors[l])
                 lin.draw(win)
-            data[s][1] = smooth(data[s][1], l + 1)
-'''
+            data[s][1] = smooth(data[s][1], l + 1)'''
+
+
+renderLid()
+while not keyboard.is_pressed('esc'):
+    if (keyboard.is_pressed('r')):
+        renderLid()
+    time.sleep(2)
+

@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 
 def csvToMatrix(csv):
@@ -63,6 +64,29 @@ def resize(mat, s):
         mat1.append(val)
     return mat1
 
+def trim(mat):
+    print("trim new")
+    alt = 12-4
+    start = 0
+    last=[0,0,0]
+    for m in mat[alt]:
+        last[start%3]=m
+        print("cutting "+str(m)+", start = "+str(start))
+        if np.matrix(last).mean() > .2:
+            break
+        start = start + 1
+    mat1 = []
+    wid = len(mat)
+    leng = len(mat[0])
+    trim=leng-start
+    for n in range(wid):
+        newarr=[]
+        for i in range(trim):
+            newarr.append(mat[n][i+start])
+        mat1.append(newarr)
+    return mat1
+
+
 
 def getData(num):
     fname = "dronedata\drone" + str(num)
@@ -73,7 +97,8 @@ def getData(num):
     dat_raw = dat_file.read()
     lid_raw = lid_file.read()
     lid = invert(reverse(csvToMatrix(lid_raw)))
-    dat = invert(csvToMatrix(dat_raw))
+    dat = trim(invert(csvToMatrix(dat_raw)))
+    #dat = (invert(csvToMatrix(dat_raw)))
     if (len(lid[0]) < len(dat[0])):
         for i in range(5):
             lid[i] = resize(lid[i], len(dat[0]))
