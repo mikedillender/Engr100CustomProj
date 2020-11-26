@@ -11,12 +11,6 @@ anchorpoint = Point(width / 2, height / 2)
 win = GraphWin("map_display_window", width, height)
 image = Image(anchorpoint, height, width)
 
-trials = []
-for i in range(5):
-    trials.append(imp.getData(i + 1))
-for d in trials:
-    print(d)
-
 '''
 trials[trial number][data index][index]=variable
 data indexes
@@ -35,27 +29,52 @@ data indexes
 12 - altitude
 13 - accel er x
 14 - accel er y
+15-18 - Lidar rates of change
 '''
+dts = [(37 - 18) / 147, (74 - 53) / 707, (57 - 38) / 647, (57 - 26) / 465, (69 - 47) / 718]
 
-def getLidVelAt(mat,n):
-    deltas=[]
+
+def getLidVelAt(mat, n, i):
+    deltas = []
+    dt = dts[i]
     for l in range(4):
-        v=0
-        if(n==0):
-            v=(mat[1+l][n+1]-mat[1+l][n])/mat[0][n]
-        elif(n+1==len(mat[0])):
-            v=(mat[1+l][n]-mat[1+l][n-1])/mat[0][n-1]
+        v = 0
+        if (n == 0):
+            v = (mat[1 + l][n + 1] - mat[1 + l][n]) / dt
+        elif (n + 1 == len(mat[0])):
+            v = (mat[1 + l][n] - mat[1 + l][n - 1]) / dt
         else:
-            v=(mat[1+l][n]-mat[1+l][n-1])/mat[0][n-1]
-            v=v+(mat[1+l][n+1]-mat[1+l][n])/mat[0][n]
+            v = (mat[1 + l][n] - mat[1 + l][n - 1]) / dt
+            v = (v + (mat[1 + l][n + 1] - mat[1 + l][n]) / dt) / 2
         deltas.append(v)
     return deltas
 
+def getAbberation(mat, n,i):
+    dt = dts[i]
+    dt=1
+    v = 0
+    if (n == 0):
+        v = abs(mat[n + 1] - mat[n]) / dt
+    elif (n + 1 == len(mat)):
+        v = abs(mat[n] - mat[n - 1]) / dt
+    else:
+        v = abs(mat[n] - mat[n - 1]) / dt
+        v = (v + abs(mat[n + 1] - mat[n]) / dt) / 2
+    return v
 
-def clear(win):
-    for item in win.items[:]:
-        item.undraw()
-    win.update()
+def smoothAbberant(mat, n,i):
+    dt = dts[i]
+    v = 0
+    if (n == 0):
+        v = abs(mat[n + 1] - mat[n]) / dt
+    elif (n + 1 == len(mat)):
+        v = abs(mat[n] - mat[n - 1]) / dt
+    else:
+        v = abs(mat[n] - mat[n - 1]) / dt
+        v = (v + abs(mat[n + 1] - mat[n]) / dt) / 2
+    return v
+
+
 
 def smooth(mat):
     size = len(mat)
@@ -69,6 +88,43 @@ def smooth(mat):
         mat[v] = newvals[v]
     return mat
 
+def addVelocities(mat, d):
+    mat1 = [[], [], [], []]
+    for i in range(len(mat[0])):
+        vels = getLidVelAt(mat, i, d)
+        for n in range(4):
+            mat1[n].append(vels[n])
+    lim=20
+    for set in mat1:
+        last=set[0]
+        for i in range(len(set)):
+            if(set[i]>lim):
+                set[i]=lim
+            elif(set[i]<-lim):
+                set[i]=-lim
+    for n in range(4):
+        set1=[]
+        for i in range(len(mat[1])):
+            set1.append(getAbberation(mat1[n],i,n))
+        #for t in range(1):
+            #mat1[n]=smooth(mat1[n])
+        #mat.append(mat1[n])
+        mat.append(set1)
+
+
+
+trials = []
+for i in range(5):
+    trials.append(imp.getData(i + 1))
+for d in range(5):
+    addVelocities(trials[d], d)
+    print(trials[d])
+
+
+def clear(win):
+    for item in win.items[:]:
+        item.undraw()
+    win.update()
 
 
 def renderLid():
@@ -76,20 +132,34 @@ def renderLid():
     clear(win)
     print('drawing')
     colors = ["green", "red", "blue", "black"]
+    scale = 1
     for s in range(5):
-        adj = int(height * float(s + 1) / 5)
+        for v in range(4):
+            adj = int(height * float(s + 1) / 6)
+            x = 0
+            y = trials[s][15 + v][0] * scale
+            print(trials[s][15 + v])
+            size = len(trials[s][15 + v])
+            for n in range(size):
+                last = Point(x, adj - y * scale)
+                x += width / size
+                y = trials[s][15 + v][n]
+                this = Point(x, adj - y * scale)
+                lin = Line(last, this)
+                lin.setFill(colors[v])
+                lin.draw(win)
+        '''adj = int(height * float(s + 1) / 5)
         x = 0
-        y = trials[s][12][0]*100
+        y = trials[s][12][0] * 100
         print(trials[s][12])
-        size=len(trials[s][12])
+        size = len(trials[s][12])
         for n in range(size):
             last = Point(x, adj - y * 100)
             x += width / size
             y = trials[s][12][n]
             this = Point(x, adj - y * 100)
             lin = Line(last, this)
-            lin.draw(win)
-
+            lin.draw(win)'''
         '''for l in range(4):
             x = 0
             y = lid1[0][1 + l]
@@ -109,4 +179,3 @@ while not keyboard.is_pressed('esc'):
     if (keyboard.is_pressed('r')):
         renderLid()
     time.sleep(2)
-
