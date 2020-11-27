@@ -3,6 +3,7 @@ from graphics import *
 import keyboard
 import time
 import sys
+import numpy as np
 
 height = 800
 width = 1000
@@ -49,8 +50,7 @@ def getLidVelAt(mat, n, i):
         deltas.append(v)
     return deltas
 
-def getAbberation(mat, n,i):
-    dt = dts[i]
+def getAbberation(mat, n):
     dt=1
     v = 0
     if (n == 0):
@@ -62,17 +62,44 @@ def getAbberation(mat, n,i):
         v = (v + abs(mat[n + 1] - mat[n]) / dt) / 2
     return v
 
-def smoothAbberant(mat, n,i):
-    dt = dts[i]
-    v = 0
-    if (n == 0):
-        v = abs(mat[n + 1] - mat[n]) / dt
-    elif (n + 1 == len(mat)):
-        v = abs(mat[n] - mat[n - 1]) / dt
-    else:
-        v = abs(mat[n] - mat[n - 1]) / dt
-        v = (v + abs(mat[n + 1] - mat[n]) / dt) / 2
-    return v
+def averageAboutN(mat,n,s):
+    sz=len(mat)
+    num=0
+    denom=0
+    powr=1.5
+    for i in range(s):
+        b=n-i
+        f=n+i
+        s=pow(s*((i+1)/(s+1)),powr)
+        if b>=0:
+            num=num+(mat[b]/s)
+            denom=denom+s
+        if f<sz:
+            num=num+(mat[b]/s)
+            denom=denom+s
+    return num/denom
+
+
+def smoothAbberant(mat):
+    mat1 = []
+    sz=len(mat)
+    dtype=[('v',float),('i',int)]
+    for i in range(len(mat)):
+        mat1.append((getAbberation(mat, i),i))
+    arr=np.array(mat1,dtype=dtype)
+    #print(arr)
+    arr=np.sort(arr,order='v')
+    tosmooth=int(sz/30)
+    for i in range(tosmooth):
+        print(arr[sz - 1 - i][0])
+        if(arr[sz-1-i][0]>2):
+            mat[arr[sz-1-i][1]]=averageAboutN(mat,arr[sz-1-i][1],4)
+        else:
+            return False
+    return True
+        #smoothAbberant()
+        #print()
+    #print(arr)
 
 
 
@@ -104,12 +131,19 @@ def addVelocities(mat, d):
                 set[i]=-lim
     for n in range(4):
         set1=[]
-        for i in range(len(mat[1])):
-            set1.append(getAbberation(mat1[n],i,n))
+        #for i in range(len(mat[1])):
+        #    set1.append(getAbberation(mat1[n],i,n))
         #for t in range(1):
             #mat1[n]=smooth(mat1[n])
-        #mat.append(mat1[n])
-        mat.append(set1)
+        #print("smoothing "+str(n))
+        r=True
+        for i in range(70):
+            r=smoothAbberant(mat1[n])
+            if(not r):
+                i=70
+        mat1[n]=smooth(mat1[n])
+        mat.append(mat1[n])
+        #mat.append(set1)
 
 
 
@@ -132,7 +166,7 @@ def renderLid():
     clear(win)
     print('drawing')
     colors = ["green", "red", "blue", "black"]
-    scale = 1
+    scale = 7
     for s in range(5):
         for v in range(4):
             adj = int(height * float(s + 1) / 6)
