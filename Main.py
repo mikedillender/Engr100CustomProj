@@ -91,7 +91,7 @@ def smoothAbberant(mat):
     arr=np.sort(arr,order='v')
     tosmooth=int(sz/30)
     for i in range(tosmooth):
-        print(arr[sz - 1 - i][0])
+        #print(arr[sz - 1 - i][0])
         if(arr[sz-1-i][0]>2):
             mat[arr[sz-1-i][1]]=averageAboutN(mat,arr[sz-1-i][1],4)
         else:
@@ -145,6 +145,24 @@ def addVelocities(mat, d):
         mat.append(mat1[n])
         #mat.append(set1)
 
+def getNetVel(mat,d,i): # d=0 : front / back, d=1 : right / left
+    ld = [mat[1 + d][i], mat[3 + d][i]]
+    lv = [-mat[15 + d][i], mat[17 + d][i]]
+    weight=.5
+    if(lv[0]==0):
+        return lv[1]
+    elif(lv[1]==0):
+        return lv[0]
+    return (lv[0]+lv[1])/2
+
+def constructNetVels():
+    for mat in trials:
+        sz=len(mat[0])
+        for d in range(2):
+            d1=[]
+            for i in range(sz):
+                d1.append(getNetVel(mat,d,i))
+            mat.append(d1)
 
 
 trials = []
@@ -152,7 +170,8 @@ for i in range(5):
     trials.append(imp.getData(i + 1))
 for d in range(5):
     addVelocities(trials[d], d)
-    print(trials[d])
+    #print(trials[d])
+constructNetVels()
 
 
 def clear(win):
@@ -168,6 +187,23 @@ def renderLid():
     colors = ["green", "red", "blue", "black"]
     scale = 7
     for s in range(5):
+        for v in range(2):
+            adj = int(height * float(s + 1) / 6)
+            zro=Line(Point(0,adj),Point(width,adj))
+            zro.draw(win)
+            x = 0
+            y = trials[s][19 + v][0] * scale
+            print(trials[s][19 + v])
+            size = len(trials[s][19 + v])
+            for n in range(size):
+                last = Point(x, adj - y * scale)
+                x += width / size
+                y = trials[s][19 + v][n]
+                this = Point(x, adj - y * scale)
+                lin = Line(last, this)
+                lin.setFill(colors[v])
+                lin.draw(win)
+        '''
         for v in range(4):
             adj = int(height * float(s + 1) / 6)
             x = 0
@@ -182,6 +218,7 @@ def renderLid():
                 lin = Line(last, this)
                 lin.setFill(colors[v])
                 lin.draw(win)
+        '''
         '''adj = int(height * float(s + 1) / 5)
         x = 0
         y = trials[s][12][0] * 100
