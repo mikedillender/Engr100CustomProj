@@ -31,6 +31,10 @@ data indexes
 13 - accel er x
 14 - accel er y
 15-18 - Lidar rates of change
+19-forward/back lidv
+20-right/left lidv
+21-lidar-based x
+22-lidar-based y
 '''
 dts = [(37 - 18) / 147, (74 - 53) / 707, (57 - 38) / 647, (57 - 26) / 465, (69 - 47) / 718]
 
@@ -142,6 +146,7 @@ def addVelocities(mat, d):
             if(not r):
                 i=70
         mat1[n]=smooth(mat1[n])
+
         mat.append(mat1[n])
         #mat.append(set1)
 
@@ -164,6 +169,38 @@ def constructNetVels():
                 d1.append(getNetVel(mat,d,i))
             mat.append(d1)
 
+def getPositions():
+    t=0
+    scales=[7,10,10,8,10]
+    for mat in trials:
+        sz=len(mat[0])
+        for d in range(2):
+            d1=[]
+            x=0
+            for i in range(sz):
+                dt0=.01
+                d1.append(x)
+                x=x+mat[19+d][i]*dts[t]*scales[t]
+                #x=x+mat[19+d][i]*mat[0][i]*dts[t]*30
+            d1.append(x)
+            mat.append(d1)
+        t+=1
+lps=[]
+def getLidPositions():
+    global lps
+    t = 0
+    scales=[7.5,6.8,6,7,6]
+    mults=[[1,0],[0,1],[-1,0],[0,-1]]
+    for mat in trials:
+        sz = len(mat[0])
+        ps=[]
+        for i in range(sz):
+            dr=Point(mat[21][i],mat[22][i])
+            for d in range(4):
+                if mat[1+d][i]<14:
+                    ps.append(Point(dr.x + mat[1+d][i] * mults[d][0] * scales[t], dr.y + mat[1+d][i] * mults[d][1]*scales[t]))
+        lps.append(ps)
+        t += 1
 
 trials = []
 for i in range(5):
@@ -172,7 +209,8 @@ for d in range(5):
     addVelocities(trials[d], d)
     #print(trials[d])
 constructNetVels()
-
+getPositions()
+getLidPositions()
 
 def clear(win):
     for item in win.items[:]:
@@ -184,9 +222,34 @@ def renderLid():
     globals()
     clear(win)
     print('drawing')
-    colors = ["green", "red", "blue", "black"]
-    scale = 7
+    colors = ["green", "red", "blue", "black","brown"]
+    adjxs=[width/4,width-width/4,width/2,width/4,width-width/4,]
+    adjys=[height/3-100,height/3-100,height/2-50,2*height/3,2*height/3]
+    scale = 1
     for s in range(5):
+        adjy = adjys[s] + 100
+        adjx = adjxs[s] - 100
+        for p in lps[s]:
+            pt=Point(p.x+adjx,p.y+adjy)
+            pt.setFill(colors[s])
+            pt.draw(win)
+    for s in range(5):
+        #adjy = int(height * float(s + 1) / 6)
+        #adjx = int(width/2)
+        adjy = adjys[s]+100
+        adjx = adjxs[s]-100
+        x = trials[s][21][0]
+        y = trials[s][22][0]
+        size = len(trials[s][21])
+        for n in range(size):
+            last = Point(adjx + x*scale, adjy + y * scale)
+            x = trials[s][21][n]
+            y = trials[s][22][n]
+            this = Point(adjx + x*scale, adjy + y * scale)
+            lin = Line(last, this)
+            lin.setFill(colors[s])
+            lin.draw(win)
+        '''
         for v in range(2):
             adj = int(height * float(s + 1) / 6)
             zro=Line(Point(0,adj),Point(width,adj))
@@ -203,6 +266,7 @@ def renderLid():
                 lin = Line(last, this)
                 lin.setFill(colors[v])
                 lin.draw(win)
+        '''
         '''
         for v in range(4):
             adj = int(height * float(s + 1) / 6)
