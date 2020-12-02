@@ -37,7 +37,9 @@ data indexes
 22-lidar-based y
 '''
 dts = [(37 - 18) / 147, (74 - 53) / 707, (57 - 38) / 647, (57 - 26) / 465, (69 - 47) / 718]
-trials=[]
+lps = []
+trials = []
+
 
 def getLidVelAt(mat, n, i):
     deltas = []
@@ -54,6 +56,7 @@ def getLidVelAt(mat, n, i):
         deltas.append(v)
     return deltas
 
+
 def getAbberation(mat, n):
     dt = 1
     v = 0
@@ -67,25 +70,27 @@ def getAbberation(mat, n):
     return v
 
 
-def averageAboutN(mat, n, s):
+def averageAboutN(mat, n, s,d):
     sz = len(mat)
-    num = 0
-    denom = 0
-    powr = 1.5
-    for i in range(s):
-        b = n - i
-        f = n + i
-        s = pow(s * ((i + 1) / (s + 1)), powr)
+    num = mat[n]
+    denom = 1
+    powrs=[2,2,1,1,.8]
+    powr = powrs[d]
+    for i in range(s-1):
+        b = n - i-1
+        f = n + i-1
+        s1 = pow(1-((i + 1) / (s)), powr)
         if b >= 0:
-            num = num + (mat[b] / s)
-            denom = denom + s
+            num = num + (mat[b] * s1)
+            denom = denom + s1
         if f < sz:
-            num = num + (mat[b] / s)
-            denom = denom + s
+            num = num + (mat[b] * s1)
+            denom = denom + s1
     return num / denom
+    #return mat[n]*.8
 
 
-def smoothAbberant(mat):
+def smoothAbberant(mat,d):
     mat1 = []
     sz = len(mat)
     dtype = [('v', float), ('i', int)]
@@ -95,16 +100,18 @@ def smoothAbberant(mat):
     # print(arr)
     arr = np.sort(arr, order='v')
     tosmooth = int(sz / 30)
+    aboutN=[2,2,2,2,3]
+    #print(str(aboutN[d]))
     for i in range(tosmooth):
         # print(arr[sz - 1 - i][0])
         if (arr[sz - 1 - i][0] > 2):
-            mat[arr[sz - 1 - i][1]] = averageAboutN(mat, arr[sz - 1 - i][1], 4)
-        else:
-            return False
+            #mat[arr[sz - 1 - i][1]] = averageAboutN(mat, arr[sz - 1 - i][1], aboutN[d],d)
+            if(mat[arr[sz - 1 - i][1]]!=0):
+                mat[arr[sz - 1 - i][1]] =mat[arr[sz - 1 - i][1]]*abs((abs(mat[arr[sz - 1 - i][1]])-1)/abs(mat[arr[sz - 1 - i][1]]))
+            else:
+                mat[arr[sz - 1 - i][1]] = averageAboutN(mat, arr[sz - 1 - i][1], aboutN[d], d)
+
     return True
-    # smoothAbberant()
-    # print()
-    # print(arr)
 
 
 def smooth(mat):
@@ -136,20 +143,13 @@ def addVelocities(mat, d):
                 set[i] = -lim
     for n in range(4):
         set1 = []
-        # for i in range(len(mat[1])):
-        #    set1.append(getAbberation(mat1[n],i,n))
-        # for t in range(1):
-        # mat1[n]=smooth(mat1[n])
-        # print("smoothing "+str(n))
         r = True
-        for i in range(60):
-            r = smoothAbberant(mat1[n])
+        for i in range(100):
+            r = smoothAbberant(mat1[n],d)
             if (not r):
-                i = 70
-        mat1[n] = smooth(mat1[n])
-
+                break
+        #mat1[n] = smooth(mat1[n])
         mat.append(mat1[n])
-        # mat.append(set1)
 
 
 def getNetVel(mat, d, i):  # d=0 : front / back, d=1 : right / left
@@ -191,13 +191,10 @@ def getPositions():
         t += 1
 
 
-lps = []
-
-
 def getLidPositions():
     global lps
     t = 0
-    scales = [7.5, 6.8, 6, 7, 6]
+    scales = [7.2, 8.1, 7.4, 7.4, 7.6]
     mults = [[1, 0], [0, 1], [-1, 0], [0, -1]]
     for mat in trials:
         sz = len(mat[0])
@@ -212,24 +209,25 @@ def getLidPositions():
         t += 1
 
 
-def setup():
-    global trials, lps
-    for i in range(5):
-        trials.append(imp.getData(i + 1))
-    for d in range(5):
-        addVelocities(trials[d], d)
-        # print(trials[d])
-    constructNetVels()
-    getPositions()
-    getLidPositions()
-    #cleanLPS()
-    print("done")
+def cleanLPS():
+    global lps
+    for t in lps:
+        rem=[]
+        for i in range(len(t)):
+            closest=10000
+            for n1 in range(len(t)-1-i):
+                n=i+n1+1
+                dx=t[i].x-t[n].x
+                dy=t[i].y-t[n].y
+                d=np.sqrt(dx*dx+dy*dy)
+                if (d<closest):
+                    closest=d
+            if(closest>3):
+                rem.append(i)
+        print("removed "+str(len(rem)))
+        for i in range(len(rem)):
+            t.pop(rem[i]-i)
 
-
-def clear(win):
-    for item in win.items[:]:
-        item.undraw()
-    win.update()
 
 def saveImg(imgnum):
     # saves the current TKinter object in postscript format
@@ -246,13 +244,33 @@ def export():
     current_time = time.strftime("%H_%M_%S", t)
     saveImg(current_time)
 
+
+def setup():
+    global trials, lps
+    for i in range(5):
+        trials.append(imp.getData(i + 1))
+    for d in range(5):
+        addVelocities(trials[d], d)
+        # print(trials[d])
+    constructNetVels()
+    getPositions()
+    getLidPositions()
+    cleanLPS()
+    print("done")
+
+
+def clear(win):
+    for item in win.items[:]:
+        item.undraw()
+    win.update()
+
 setup()
 
 def renderLid():
     globals()
     clear(win)
     print('drawing')
-    colors = ["green", "red", "blue", "black", "brown"]
+    colors = ["green", "red", "blue", "purple", "brown"]
     adjxs = [width / 4, width - width / 4, width / 2, width / 4, width - width / 4, ]
     adjys = [height / 3 - 100, height / 3 - 100, height / 2 - 50, 2 * height / 3, 2 * height / 3]
 
@@ -282,7 +300,7 @@ def renderLid():
                 y = trials[s][22][n]
                 this = Point(adjx + x * scale, adjy + y * scale)
                 lin = Line(last, this)
-                lin.setFill(colors[s])
+                lin.setFill("black")
                 lin.draw(win)
 
         if mode==0:
