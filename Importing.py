@@ -71,7 +71,6 @@ def trim(mat):
     last=[0,0,0]
     for m in mat[alt]:
         last[start%3]=m
-        print("cutting "+str(m)+", start = "+str(start))
         if np.matrix(last).mean() > .2:
             break
         start = start + 1
