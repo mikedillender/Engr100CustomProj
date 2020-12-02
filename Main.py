@@ -37,7 +37,7 @@ data indexes
 22-lidar-based y
 '''
 dts = [(37 - 18) / 147, (74 - 53) / 707, (57 - 38) / 647, (57 - 26) / 465, (69 - 47) / 718]
-
+trials=[]
 
 def getLidVelAt(mat, n, i):
     deltas = []
@@ -231,6 +231,21 @@ def clear(win):
         item.undraw()
     win.update()
 
+def saveImg(imgnum):
+    # saves the current TKinter object in postscript format
+    win.postscript(file="saves/image.eps", colormode='color')
+    from PIL import EpsImagePlugin
+    EpsImagePlugin.gs_windows_binary = r'c:\Program Files\gs\gs9.53.3\bin\gswin64c'
+    # Convert from eps format to gif format using PIL
+    from PIL import Image as NewImage
+    img = NewImage.open("saves/image.eps")
+    string='saves/img'+str(imgnum)+'.gif'
+    img.save(string, "gif")
+def export():
+    t = time.localtime()
+    current_time = time.strftime("%H_%M_%S", t)
+    saveImg(current_time)
+
 setup()
 
 def renderLid():
@@ -330,6 +345,7 @@ def renderLid():
 
 
 renderLid()
+export()
 while not keyboard.is_pressed('esc'):
     if (keyboard.is_pressed('r')):
         renderLid()
