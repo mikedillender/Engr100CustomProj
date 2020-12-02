@@ -212,15 +212,18 @@ def getLidPositions():
         t += 1
 
 
-trials = []
-for i in range(5):
-    trials.append(imp.getData(i + 1))
-for d in range(5):
-    addVelocities(trials[d], d)
-    # print(trials[d])
-constructNetVels()
-getPositions()
-getLidPositions()
+def setup():
+    global trials, lps
+    for i in range(5):
+        trials.append(imp.getData(i + 1))
+    for d in range(5):
+        addVelocities(trials[d], d)
+        # print(trials[d])
+    constructNetVels()
+    getPositions()
+    getLidPositions()
+    #cleanLPS()
+    print("done")
 
 
 def clear(win):
@@ -228,6 +231,7 @@ def clear(win):
         item.undraw()
     win.update()
 
+setup()
 
 def renderLid():
     globals()
@@ -236,48 +240,53 @@ def renderLid():
     colors = ["green", "red", "blue", "black", "brown"]
     adjxs = [width / 4, width - width / 4, width / 2, width / 4, width - width / 4, ]
     adjys = [height / 3 - 100, height / 3 - 100, height / 2 - 50, 2 * height / 3, 2 * height / 3]
-    scale = 1
+
+    mode=2
+    scale = 5 if mode==0 else 1
+    if(mode==2):
+        for s in range(5):
+            adjy = adjys[s] + 100
+            adjx = adjxs[s] - 100
+            for p in lps[s]:
+                pt = Point(p.x + adjx, p.y + adjy)
+                pt.setFill(colors[s])
+                pt.draw(win)
+
     for s in range(5):
-        adjy = adjys[s] + 100
-        adjx = adjxs[s] - 100
-        for p in lps[s]:
-            pt = Point(p.x + adjx, p.y + adjy)
-            pt.setFill(colors[s])
-            pt.draw(win)
-    for s in range(5):
-        # adjy = int(height * float(s + 1) / 6)
-        # adjx = int(width/2)
-        adjy = adjys[s] + 100
-        adjx = adjxs[s] - 100
-        x = trials[s][21][0]
-        y = trials[s][22][0]
-        size = len(trials[s][21])
-        for n in range(size):
-            last = Point(adjx + x * scale, adjy + y * scale)
-            x = trials[s][21][n]
-            y = trials[s][22][n]
-            this = Point(adjx + x * scale, adjy + y * scale)
-            lin = Line(last, this)
-            lin.setFill(colors[s])
-            lin.draw(win)
-        '''
-        for v in range(2):
-            adj = int(height * float(s + 1) / 6)
-            zro=Line(Point(0,adj),Point(width,adj))
-            zro.draw(win)
-            x = 0
-            y = trials[s][19 + v][0] * scale
-            print(trials[s][19 + v])
-            size = len(trials[s][19 + v])
+        if mode==1 or mode==2:
+            # adjy = int(height * float(s + 1) / 6)
+            # adjx = int(width/2)
+            adjy = adjys[s] + 100
+            adjx = adjxs[s] - 100
+            x = trials[s][21][0]
+            y = trials[s][22][0]
+            size = len(trials[s][21])
             for n in range(size):
-                last = Point(x, adj - y * scale)
-                x += width / size
-                y = trials[s][19 + v][n]
-                this = Point(x, adj - y * scale)
+                last = Point(adjx + x * scale, adjy + y * scale)
+                x = trials[s][21][n]
+                y = trials[s][22][n]
+                this = Point(adjx + x * scale, adjy + y * scale)
                 lin = Line(last, this)
-                lin.setFill(colors[v])
+                lin.setFill(colors[s])
                 lin.draw(win)
-        '''
+
+        if mode==0:
+            for v in range(2):
+                adj = int(height * float(s + 1) / 6)
+                zro=Line(Point(0,adj),Point(width,adj))
+                zro.draw(win)
+                x = 0
+                y = trials[s][19 + v][0] * scale
+                print(trials[s][19 + v])
+                size = len(trials[s][19 + v])
+                for n in range(size):
+                    last = Point(x, adj - y * scale)
+                    x += width / size
+                    y = trials[s][19 + v][n]
+                    this = Point(x, adj - y * scale)
+                    lin = Line(last, this)
+                    lin.setFill(colors[v])
+                    lin.draw(win)
         '''
         for v in range(4):
             adj = int(height * float(s + 1) / 6)
