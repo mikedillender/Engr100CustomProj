@@ -252,7 +252,7 @@ def renderLid():
     globals()
     clear(win)
     print('drawing')
-    colors = ["green", "red", "blue", "black", "brown"]
+    colors = ["green", "red", "blue", "purple", "brown"]
     adjxs = [width / 4, width - width / 4, width / 2, width / 4, width - width / 4, ]
     adjys = [height / 3 - 100, height / 3 - 100, height / 2 - 50, 2 * height / 3, 2 * height / 3]
 
@@ -282,7 +282,7 @@ def renderLid():
                 y = trials[s][22][n]
                 this = Point(adjx + x * scale, adjy + y * scale)
                 lin = Line(last, this)
-                lin.setFill(colors[s])
+                lin.setFill("black")
                 lin.draw(win)
 
         if mode==0:
