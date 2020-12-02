@@ -74,7 +74,8 @@ def averageAboutN(mat, n, s,d):
     sz = len(mat)
     num = mat[n]
     denom = 1
-    powr = 2
+    powrs=[2,2,1,1,.8]
+    powr = powrs[d]
     for i in range(s-1):
         b = n - i-1
         f = n + i-1
@@ -98,8 +99,8 @@ def smoothAbberant(mat,d):
     arr = np.array(mat1, dtype=dtype)
     # print(arr)
     arr = np.sort(arr, order='v')
-    tosmooth = int(sz / 50)
-    aboutN=[4,4,4,4,4]
+    tosmooth = int(sz / 30)
+    aboutN=[2,2,2,2,3]
     #print(str(aboutN[d]))
     for i in range(tosmooth):
         # print(arr[sz - 1 - i][0])
@@ -193,7 +194,7 @@ def getPositions():
 def getLidPositions():
     global lps
     t = 0
-    scales = [7.5, 6.8, 6, 7, 7.5]
+    scales = [7.2, 8.1, 7.4, 7.4, 7.6]
     mults = [[1, 0], [0, 1], [-1, 0], [0, -1]]
     for mat in trials:
         sz = len(mat[0])
@@ -228,6 +229,22 @@ def cleanLPS():
             t.pop(rem[i]-i)
 
 
+def saveImg(imgnum):
+    # saves the current TKinter object in postscript format
+    win.postscript(file="saves/image.eps", colormode='color')
+    from PIL import EpsImagePlugin
+    EpsImagePlugin.gs_windows_binary = r'c:\Program Files\gs\gs9.53.3\bin\gswin64c'
+    # Convert from eps format to gif format using PIL
+    from PIL import Image as NewImage
+    img = NewImage.open("saves/image.eps")
+    string='saves/img'+str(imgnum)+'.gif'
+    img.save(string, "gif")
+def export():
+    t = time.localtime()
+    current_time = time.strftime("%H_%M_%S", t)
+    saveImg(current_time)
+
+
 def setup():
     global trials, lps
     for i in range(5):
@@ -238,7 +255,7 @@ def setup():
     constructNetVels()
     getPositions()
     getLidPositions()
-    #cleanLPS()
+    cleanLPS()
     print("done")
 
 
@@ -253,7 +270,7 @@ def renderLid():
     globals()
     clear(win)
     print('drawing')
-    colors = ["green", "red", "blue", "black", "brown"]
+    colors = ["green", "red", "blue", "purple", "brown"]
     adjxs = [width / 4, width - width / 4, width / 2, width / 4, width - width / 4, ]
     adjys = [height / 3 - 100, height / 3 - 100, height / 2 - 50, 2 * height / 3, 2 * height / 3]
 
@@ -283,7 +300,7 @@ def renderLid():
                 y = trials[s][22][n]
                 this = Point(adjx + x * scale, adjy + y * scale)
                 lin = Line(last, this)
-                lin.setFill(colors[s])
+                lin.setFill("black")
                 lin.draw(win)
 
         if mode==0:
@@ -346,6 +363,7 @@ def renderLid():
 
 
 renderLid()
+export()
 while not keyboard.is_pressed('esc'):
     if (keyboard.is_pressed('r')):
         renderLid()
