@@ -175,7 +175,7 @@ def constructNetVels():
 
 def getPositions():
     t = 0
-    scales = [7, 10, 10, 8, 15]
+    scales = [7, 10, 10, 8, 15*.8]
     for mat in trials:
         sz = len(mat[0])
         for d in range(2):
@@ -197,7 +197,7 @@ lps = []
 def getLidPositions():
     global lps
     t = 0
-    scales = [7.5, 6.8, 6, 7, 9]
+    scales = [7.5, 6.8, 6, 7, 9*.8]
     mults = [[1, 0], [0, 1], [-1, 0], [0, -1]]
     for mat in trials:
         sz = len(mat[0])
